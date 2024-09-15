@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGPA COMPILATION TOOL</title>
+    <link rel="icon" href="/IMAGES/College Logo.png" />
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #7eacfd;
+        }
+
+        /* Main Page */
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 40px auto;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .college-logo {
+            width: 280px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .form-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        select,
+        input,
+        button {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 200px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-reset {
+            background-color: #3498db;
+        }
+
+        /* CGPA result animation */
+        .fade-in {
+            opacity: 0;
+            transition: opacity 1.5s ease-in;
+        }
+
+        .show {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            table,
+            th,
+            td {
+                font-size: 14px;
+            }
+
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+
+<body oncontextmenu="return false;" onkeydown="disableShortcuts(event)">
+
+    <!-- Main Page for Semester Input -->
+    <div class="container" id="semester-page">
+        <header>
+            <img src="/IMAGES/College background.png" alt="College Logo" class="college-logo">
+            <br>
+            <h2>CGPA Calculator</h2>
+        </header>
+
+        <div class="form-container">
+            <label for="semester-count">Total Semesters</label><br><br>
+            <select id="semester-count" name="semester-count">
+                <option value="0">Select number of semesters</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+            </select><br>
+            <button onclick="goToNextPage()">Enter</button>
+        </div>
+    </div>
+
+    <!-- Result Page -->
+    <div class="container" id="result-page" style="display:none;">
+        <header>
+            <img src="/IMAGES/College background.png" alt="College Logo" class="college-logo">
+            <br>
+            <h2>CGPA Result</h2>
+        </header>
+
+        <div id="semester-table-container"></div><br>
+
+        <div>
+            <p id="cgpa-result" class="fade-in" style="text-align:center; font-size:18px; font-weight:bold;"></p>
+        </div><br>
+
+        <button onclick="calculateCGPA()">Calculate CGPA</button>
+        <button class="btn-reset" onclick="resetInput()">Reset Input</button>
+        <button onclick="goBack()">Go Back</button>
+    </div>
+
+    <script>
+        // Disable right-click and keyboard shortcuts
+        function disableShortcuts(event) {
+            if (event.key === "F12" || (event.ctrlKey && (event.key === "u" || event.key === "Shift" || event.key === "c" || event.key === "j"))) {
+                event.preventDefault();
+            }
+        }
+
+        // Go to next page and show table
+        function goToNextPage() {
+            const semesterCount = document.getElementById('semester-count').value;
+            if (semesterCount > 0) {
+                document.getElementById('semester-page').style.display = 'none';
+                document.getElementById('result-page').style.display = 'block';
+                generateTable(semesterCount);
+            } else {
+                alert("Please select the number of semesters.");
+            }
+        }
+
+        // Generate table based on semester count
+        function generateTable(semesterCount) {
+            const tableContainer = document.getElementById('semester-table-container');
+            tableContainer.innerHTML = ''; // Clear any previous table
+
+            let table = `<table>
+                    <thead>
+                        <tr>
+                            <th>Semester</th>
+                            <th>Total Credit Points</th>
+                            <th>SGPA</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            for (let i = 1; i <= semesterCount; i++) {
+                table += `<tr>
+                    <td>${i}</td>
+                    <td><input type="number" id="credit-${i}" min="0" max="50"></td>
+                    <td><input type="number" id="sgpa-${i}" min="0" max="10" step="0.01"></td>
+                  </tr>`;
+            }
+
+            table += `</tbody></table>`;
+            tableContainer.innerHTML = table;
+        }
+
+        // Calculate CGPA
+        function calculateCGPA() {
+            const semesterCount = document.getElementById('semester-count').value;
+            let totalCredits = 0;
+            let weightedSum = 0;
+
+            for (let i = 1; i <= semesterCount; i++) {
+                let credit = parseFloat(document.getElementById(`credit-${i}`).value) || 0;
+                let sgpa = parseFloat(document.getElementById(`sgpa-${i}`).value) || 0;
+
+                totalCredits += credit;
+                weightedSum += credit * sgpa;
+            }
+
+            const cgpa = totalCredits > 0 ? weightedSum / totalCredits : 0;
+            const cgpaResult = document.getElementById('cgpa-result');
+
+            cgpaResult.innerText = `Your CGPA is: ${cgpa.toFixed(2)}`;
+            cgpaResult.classList.add('show');  // Show CGPA result with animation
+        }
+
+        // Reset Input - Clears the table
+        function resetInput() {
+            const semesterCount = document.getElementById('semester-count').value;
+
+            // Clear all input fields in the table
+            for (let i = 1; i <= semesterCount; i++) {
+                document.getElementById(`credit-${i}`).value = '';
+                document.getElementById(`sgpa-${i}`).value = ''; // Reset SGPA input
+            }
+
+            // Hide CGPA result and reset the animation
+            const cgpaResult = document.getElementById('cgpa-result');
+            cgpaResult.innerText = '';
+            cgpaResult.classList.remove('show');
+        }
+
+        // Go back to the semester selection page
+        function goBack() {
+            document.getElementById('result-page').style.display = 'none';
+            document.getElementById('semester-page').style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
